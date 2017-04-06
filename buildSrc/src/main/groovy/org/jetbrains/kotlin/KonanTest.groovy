@@ -94,6 +94,7 @@ abstract class KonanTest extends JavaExec {
             main = 'org.jetbrains.kotlin.cli.bc.K2NativeKt'
             classpath = project.configurations.cli_bc
             enableAssertions = true
+            jvmArgs "-noverify"
             args = ["-output", output,
                     "-ea",
                     *filesToCompile,
