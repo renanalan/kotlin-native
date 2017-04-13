@@ -1719,9 +1719,18 @@ internal class CodeGeneratorVisitor(val context: Context) : IrElementVisitorVoid
                 val subroutineType = descriptor.subroutineType //debugInfo.DICreateSubroutineType(context.debugInfo.builder, allocArrayOf(kDiInt32Type), 1)
                 val functionLlvmValue = codegen.functionLlvmValue(descriptor) as debugInfo.LLVMValueRef
                 val linkageName = LLVMGetValueName(functionLlvmValue as llvm.LLVMValueRef)!!.toKString()
-                val diFunction = debugInfo.DICreateFunction(context.debugInfo.builder, context.debugInfo.compilationModule as debugInfo.DIScopeOpaqueRef,
-                        linkageName, linkageName,
-                        file().file(), line(), subroutineType, 0, 1, 0)
+                val diFunction = debugInfo.DICreateFunction(
+                        builder      = context.debugInfo.builder,
+                        scope        = context.debugInfo.compilationModule as debugInfo.DIScopeOpaqueRef,
+                        name         = descriptor.name.asString(),
+                        linkageName  = linkageName,
+                        file         = file().file(),
+                        lineNo       = line(),
+                        type         = subroutineType,
+                        //TODO: need more investigations.
+                        isLocal      = 0,
+                        isDefinition = 1,
+                        scopeLine    = 0)
                 debugInfo.DIFunctionAddSubprogram(functionLlvmValue , diFunction)
                 diFunction!!
             }
