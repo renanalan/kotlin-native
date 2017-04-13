@@ -1722,8 +1722,8 @@ internal class CodeGeneratorVisitor(val context: Context) : IrElementVisitorVoid
                 val diFunction = debugInfo.DICreateFunction(
                         builder      = context.debugInfo.builder,
                         scope        = context.debugInfo.compilationModule as debugInfo.DIScopeOpaqueRef,
-                        name         = linkageName,
-                        linkageName  = "_$linkageName",
+                        name         = descriptor.name.asString(),
+                        linkageName  = linkageName,
                         file         = file().file(),
                         lineNo       = line(),
                         type         = subroutineType,
