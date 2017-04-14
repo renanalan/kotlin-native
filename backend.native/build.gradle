@@ -163,7 +163,7 @@ kotlinNativeInterop {
      }
      if (isLinux()) {
        linker 'clang++'
-       linkerOpts = ["-Wl,--whole-archive"] + ldFlags + ["-Wl,--no-whole-archive"]
+       linkerOpts = ["-Wl,--whole-archive"] + ldFlags + ["-Wl,--no-whole-archive", "-lLLVMCore", "-lLLVMSupport"]
      }
    }
 
