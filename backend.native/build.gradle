@@ -154,11 +154,16 @@ kotlinNativeInterop {
    }
 
    debugInfo {
+     def ldFlags = ["-L${project(':llvmDebugInfoC').buildDir}/libs/debugInfo/static", "-ldebugInfo"]
      dependsOn ":llvmDebugInfoC:debugInfoStaticLibrary"
      defFile '../llvmDebugInfoC/debugInfo.def'
-     compilerOpts "-fPIC", "-I$llvmDir/include", "-I${project(':llvmDebugInfoC').projectDir}/src/main/include"
+     compilerOpts "-I$llvmDir/include", "-I${project(':llvmDebugInfoC').projectDir}/src/main/include"
+     if (isMac()) {
+        linkerOpts = ["-Wl,-all_load"] + ldFlags
+     }
      if (isLinux()) {
        linker 'clang++'
+       linkerOpts = ["-Wl,--whole-archive"] + ldFlags + ["-Wl,--no-whole-archive"]
      }
    }
 
