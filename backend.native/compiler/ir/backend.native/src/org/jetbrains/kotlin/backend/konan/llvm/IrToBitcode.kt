@@ -54,6 +54,18 @@ import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 
+internal object DWARF {
+    val DW_LANG_kotlin                 = 0xbabe
+    /* TODO: konanc version should be generated somwhere and reused here. */
+    val producer                       = "konanc EAP 0.1 / kotlin-compiler: ${KotlinVersion.CURRENT}"
+    /* TODO: from LLVM sources is unclear what runtimeVersion coresponds to term in dwarf specification. */
+    val runtimeVersion                 = 2
+    val dwarfVersionMetaDataNodeName   = "Dwarf Name".mdString()
+    val dwarfDebugInfoMetaDataNodeName = "Debug Info Version".mdString()
+}
+
+internal fun String.mdString() = LLVMMDString(this, this.length)!!
+
 internal fun emitLLVM(context: Context) {
 
         val irModule = context.irModule!!
@@ -64,6 +76,7 @@ internal fun emitLLVM(context: Context) {
         // used to compile runtime.bc.
         val llvmModule = LLVMModuleCreateWithName("out")!! // TODO: dispose
         context.llvmModule = llvmModule
+        @Suppress("UNCHECKED_CAST")
         val diLlvmModule = llvmModule as debugInfo.LLVMModuleRef
         context.debugInfo.builder = debugInfo.DICreateBuilder(diLlvmModule)
         val outFile = context.config.configuration.get(KonanConfigKeys.BITCODE_FILE)!!
@@ -79,24 +92,30 @@ internal fun emitLLVM(context: Context) {
 
         if (context.shouldContainDebugInfo()) {
             @Suppress("UNCHECKED_CAST")
-            context.debugInfo.module = debugInfo.DICreateModule(context.debugInfo.builder, diLlvmModule as debugInfo.DIScopeOpaqueRef, outFile, "", "", "")
-            /**
-             * TODO: figure out:
-             * - language value
-             * - take name of compiler from build generated file.
-             */
-            context.debugInfo.compilationModule = debugInfo.DICreateCompilationUnit(context.debugInfo.builder, 0x1, outFile, "", "konanc", 0, "", 2)
-
-            /**
-             *  TODO: figure out which value should be used here.
-             */
-            val version = "Dwarf Version"
-            val dwarfVersion = LLVMMDNode(listOf(Int32(2).llvm, LLVMMDString(version, version.length)!!, Int32(2).llvm).toCValues(), 3)
-            val debugInfoVersion = "Debug Info Version"
-            val nodeDebugInfoVersion = LLVMMDNode(listOf(Int32(2).llvm, LLVMMDString(debugInfoVersion, debugInfoVersion.length)!!, Int32(3).llvm).toCValues(), 3)
-            LLVMAddNamedMetadataOperand(llvmModule, "llvm.module.flags", dwarfVersion)
-            LLVMAddNamedMetadataOperand(llvmModule, "llvm.module.flags", nodeDebugInfoVersion)
+            context.debugInfo.module = debugInfo.DICreateModule(
+                    builder            = context.debugInfo.builder,
+                    scope              = diLlvmModule as debugInfo.DIScopeOpaqueRef,
+                    name               = outFile,
+                    configurationMacro = "",
+                    includePath        = "",
+                    iSysRoot           = "")
+            context.debugInfo.compilationModule = debugInfo.DICreateCompilationUnit(
+                    builder     = context.debugInfo.builder,
+                    lang        = DWARF.DW_LANG_kotlin ,
+                    File        = outFile,
+                    dir         = "",
+                    producer    = DWARF.producer,
+                    isOptimized = 0,
+                    flags       = "",
+                    rv          = DWARF.runtimeVersion)
+            val llvmTwo = Int32(2).llvm
+            val dwarfVersion = LLVMMDNode(listOf(llvmTwo, DWARF.dwarfVersionMetaDataNodeName , Int32(context.debugInfo.dwarfVersion).llvm).toCValues(), 3)
+            val nodeDebugInfoVersion = LLVMMDNode(listOf(llvmTwo, DWARF.dwarfDebugInfoMetaDataNodeName, Int32(context.debugInfo.debugInfoVersion).llvm).toCValues(), 3)
+            val llvmModuleFlags = "llvm.module.flags"
+            LLVMAddNamedMetadataOperand(llvmModule, llvmModuleFlags, dwarfVersion)
+            LLVMAddNamedMetadataOperand(llvmModule, llvmModuleFlags, nodeDebugInfoVersion)
         }
+
         phaser.phase(KonanPhase.CODEGEN) {
             irModule.acceptVoid(CodeGeneratorVisitor(context))
         }

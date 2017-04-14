@@ -425,6 +425,8 @@ internal class Context(config: KonanConfig) : KonanBackendContext(config) {
         var module: debugInfo.DIModuleRef? = null
         var compilationModule: debugInfo.DICompileUnitRef? = null
         var types = mutableMapOf<KotlinType, debugInfo.DITypeOpaqueRef>()
+        val dwarfVersion = 2 /* TODO: configurable? */
+        val debugInfoVersion = 3 /* TODO: configurable? */
     }
 }
 
