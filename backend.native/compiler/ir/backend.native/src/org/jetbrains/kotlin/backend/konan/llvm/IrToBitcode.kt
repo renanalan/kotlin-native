@@ -55,7 +55,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 
 internal object DWARF {
-    val DW_LANG_kotlin                 = 0xbabe
+    val DW_LANG_kotlin                 = 1 //TODO: we need own constant e.g. 0xbabe
     /* TODO: konanc version should be generated somwhere and reused here. */
     val producer                       = "konanc EAP 0.1 / kotlin-compiler: ${KotlinVersion.CURRENT}"
     /* TODO: from LLVM sources is unclear what runtimeVersion coresponds to term in dwarf specification. */
